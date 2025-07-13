@@ -1,13 +1,6 @@
 spring:
+  profiles:
+    default: ${SPRING_PROFILE:default}
+    include: db
   config:
     import: optional:file:.env
-  datasource:
-    url: jdbc:${DB_TYPE:mysql}://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:test}?${DB_PARAMS:serverTimezone=UTC&useUnicode=true&characterEncoding=utf8}
-    username: ${DB_USERNAME:root}
-    password: ${DB_PASSWORD:root}
-    driver-class-name: ${DB_DRIVER:com.mysql.cj.jdbc.Driver}
-  jpa:
-    hibernate:
-      ddl-auto: ${DB_DDL_AUTO:create-drop}
-      naming:
-        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
