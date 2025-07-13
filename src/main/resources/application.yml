@@ -4,3 +4,10 @@ spring:
     include: db
   config:
     import: optional:file:.env
+
+app:
+  server:
+    url: ${APP_SERVER_URL:http://localhost:8080}
+  swagger:
+    id: ${APP_SWAGGER_ID:swagger}
+    pw: ${APP_SWAGGER_PW:swagger}

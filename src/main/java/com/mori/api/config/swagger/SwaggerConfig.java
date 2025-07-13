@@ -1,4 +1,4 @@
-package com.mori.api.config;
+package com.mori.api.config.swagger;
 
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
@@ -17,7 +17,7 @@ import org.springframework.context.annotation.Configuration;
 public class SwaggerConfig {
 
     @Bean
-    public OpenAPI openAPI(@Value("${app.server.url:localhost:8080}") final String moriServerUrl) {
+    public OpenAPI openAPI(@Value("${app.server.url}") final String moriServerUrl) {
         return new OpenAPI().info(generateInfo())
                 .servers(List.of(generateServer(moriServerUrl)))
                 .components(generateComponents())
@@ -67,5 +67,4 @@ public class SwaggerConfig {
                 .name("Refresh-Token")
                 .description("Refresh Token");
     }
-
 }
