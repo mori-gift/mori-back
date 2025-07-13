@@ -1,6 +1,6 @@
 spring:
   profiles:
-    default: ${SPRING_PROFILE:default}
+    active: ${SPRING_PROFILE:default}
     include: db
   config:
     import: optional:file:.env
