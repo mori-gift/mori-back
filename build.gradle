@@ -3,6 +3,7 @@ plugins {
     id 'org.springframework.boot' version '3.5.3'
     id 'io.spring.dependency-management' version '1.1.7'
     id 'checkstyle'
+    id 'jacoco'
 }
 
 group = 'com.mori'
@@ -77,3 +78,85 @@ checkstyle {
 }
 
 checkstyleTest.enabled = false
+
+
+// Jacoco Coverage Report
+jacoco {
+    toolVersion = "0.8.13"
+}
+
+// QClass 패턴을 찾는 메서드
+def findQClassPatterns() {
+    def excludedPatterns = []
+    def generatedDir = layout.buildDirectory.dir("generated").get().asFile
+
+    fileTree(generatedDir).include("**/Q*.java")
+            .each { File file ->
+                def className = file.name.replace('.java', '')
+                excludedPatterns.add("**/${className}.class")
+            }
+
+    return excludedPatterns
+}
+
+// Jacoco 제외 항목 추가
+def createFilteredClassDirectories() {
+    def defaultExcludedPatterns = [
+            '**/GreenApplication.class',
+            '**/common/**', '**/config/**', '**/infra/**'
+    ]
+
+    return sourceSets.main.output.classesDirs.files.collect { dirPath ->
+        fileTree(
+                dir: dirPath,
+                excludes: defaultExcludedPatterns + findQClassPatterns()
+        )
+    }
+}
+
+jacocoTestReport {
+    dependsOn test
+
+    afterEvaluate {
+        classDirectories.setFrom(files(createFilteredClassDirectories()))
+    }
+
+    reports {
+        xml.required = true
+        csv.required = false
+        html.outputLocation = layout.buildDirectory.dir('reports/jacoco/html')
+    }
+
+    finalizedBy jacocoTestCoverageVerification
+}
+
+
+jacocoTestCoverageVerification {
+    afterEvaluate {
+        classDirectories.setFrom(files(createFilteredClassDirectories()))
+    }
+
+    violationRules {
+        rule {
+            element = 'CLASS'
+
+            limit {
+                counter = 'LINE'
+                value = 'COVEREDRATIO'
+                minimum = 0.60
+            }
+
+            limit {
+                counter = 'BRANCH'
+                value = 'COVEREDRATIO'
+                minimum = 0.60
+            }
+
+            limit {
+                counter = 'METHOD'
+                value = 'COVEREDRATIO'
+                minimum = 0.60
+            }
+        }
+    }
+}
