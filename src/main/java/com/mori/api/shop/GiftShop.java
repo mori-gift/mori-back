@@ -1,4 +1,4 @@
-package com.mori.api.domain.shop;
+package com.mori.api.shop;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;

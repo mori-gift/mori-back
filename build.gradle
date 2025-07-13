@@ -2,6 +2,8 @@ plugins {
     id 'java'
     id 'org.springframework.boot' version '3.5.3'
     id 'io.spring.dependency-management' version '1.1.7'
+    id 'checkstyle'
+    id 'jacoco'
 }
 
 group = 'com.mori'
@@ -24,12 +26,33 @@ repositories {
 }
 
 dependencies {
+
+    // spring
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.springframework.boot:spring-boot-starter-web'
+
+    // lombok
     compileOnly 'org.projectlombok:lombok'
-    runtimeOnly 'com.mysql:mysql-connector-j'
     annotationProcessor 'org.projectlombok:lombok'
+
+    // db
+    runtimeOnly 'com.mysql:mysql-connector-j'
+
+    // 개발 편의
+    implementation 'me.paulschwarz:spring-dotenv:4.0.0'
+    implementation 'com.github.gavlyukovskiy:p6spy-spring-boot-starter:1.10.0'
+
+    // swagger
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.9'
+
+    // QueryDSL
+    implementation 'com.querydsl:querydsl-jpa:5.0.0:jakarta'
+    annotationProcessor "com.querydsl:querydsl-apt:${dependencyManagement.importedProperties['querydsl.version']}:jakarta"
+    annotationProcessor 'jakarta.annotation:jakarta.annotation-api'
+    annotationProcessor 'jakarta.persistence:jakarta.persistence-api'
+
+    // test
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.security:spring-security-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
@@ -37,4 +60,103 @@ dependencies {
 
 tasks.named('test') {
     useJUnitPlatform()
+}
+
+// check style
+tasks.withType(Checkstyle) {
+    reports {
+        xml.required = true
+        html.required = true
+    }
+}
+
+checkstyleMain.source = fileTree('src/main/java')
+
+checkstyle {
+    configFile = file("checkstyle/naver-checkstyle-rules.xml")
+    configProperties = ["suppressionFile": "checkstyle/naver-checkstyle-suppressions.xml"]
+}
+
+checkstyleTest.enabled = false
+
+
+// Jacoco Coverage Report
+jacoco {
+    toolVersion = "0.8.13"
+}
+
+// QClass 패턴을 찾는 메서드
+def findQClassPatterns() {
+    def excludedPatterns = []
+    def generatedDir = layout.buildDirectory.dir("generated").get().asFile
+
+    fileTree(generatedDir).include("**/Q*.java")
+            .each { File file ->
+                def className = file.name.replace('.java', '')
+                excludedPatterns.add("**/${className}.class")
+            }
+
+    return excludedPatterns
+}
+
+// Jacoco 제외 항목 추가
+def createFilteredClassDirectories() {
+    def defaultExcludedPatterns = [
+            '**/ApiApplication.class',
+            '**/common/**', '**/config/**', '**/infra/**'
+    ]
+
+    return sourceSets.main.output.classesDirs.files.collect { dirPath ->
+        fileTree(
+                dir: dirPath,
+                excludes: defaultExcludedPatterns + findQClassPatterns()
+        )
+    }
+}
+
+jacocoTestReport {
+    dependsOn test
+
+    afterEvaluate {
+        classDirectories.setFrom(files(createFilteredClassDirectories()))
+    }
+
+    reports {
+        xml.required = true
+        csv.required = false
+        html.outputLocation = layout.buildDirectory.dir('reports/jacoco/html')
+    }
+
+    finalizedBy jacocoTestCoverageVerification
+}
+
+
+jacocoTestCoverageVerification {
+    afterEvaluate {
+        classDirectories.setFrom(files(createFilteredClassDirectories()))
+    }
+
+    violationRules {
+        rule {
+            element = 'CLASS'
+
+            limit {
+                counter = 'LINE'
+                value = 'COVEREDRATIO'
+                minimum = 0.60
+            }
+
+            limit {
+                counter = 'BRANCH'
+                value = 'COVEREDRATIO'
+                minimum = 0.60
+            }
+
+            limit {
+                counter = 'METHOD'
+                value = 'COVEREDRATIO'
+                minimum = 0.60
+            }
+        }
+    }
 }
