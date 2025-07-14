@@ -1,4 +1,4 @@
-package com.mori.api.common.ui.dto;
+package com.mori.api.common.ui.template;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
