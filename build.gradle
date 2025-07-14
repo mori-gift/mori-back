@@ -104,7 +104,7 @@ def findQClassPatterns() {
 def createFilteredClassDirectories() {
     def defaultExcludedPatterns = [
             '**/ApiApplication.class', '**/config/**', '**/infra/**',
-            '**/common/exception/**', '**/common/ui/**'
+            '**/common/exception/**', '**/common/ui/**', '**/common/domain/**'
     ]
 
     return sourceSets.main.output.classesDirs.files.collect { dirPath ->
